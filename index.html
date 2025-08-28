@@ -1,98 +1,136 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
-    <title>CODE WITH HOSSEIN</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- BoxIcons v2.1.2 -->
-    <link href="https://unpkg.com/boxicons@2.1.2/css/boxicons.min.css" rel="stylesheet">
-
-    <!-- Montserrat Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
-    <!-- CSS File -->
-    <link rel="stylesheet" href="css/style.css">
-
+  <meta charset="UTF-8">
+  <title>🎬 Story Image Prompt Generator</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f4f4; margin:0; padding:20px; }
+    h1 { text-align:center; }
+    .container { max-width: 800px; margin:auto; background:white; padding:20px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1); }
+    label { font-weight:bold; display:block; margin-top:15px; }
+    textarea, input, select, button {
+      width:100%; padding:10px; margin-top:8px; border-radius:6px; border:1px solid #ccc;
+    }
+    button { background:#2196F3; color:white; border:none; cursor:pointer; margin-top:20px; }
+    button:hover { background:#1976D2; }
+    .output { margin-top:30px; padding:15px; background:#f9f9f9; border-radius:6px; border:1px solid #ddd; white-space:pre-wrap; }
+    img { max-width:100%; border-radius:6px; margin-top:10px; }
+  </style>
 </head>
-
 <body>
 
-    <div class="container">
-        
-        <div class="card">
-            <div class="card-image">
-                <img src="images/01.png" alt="...">
-                <i class="bx bx-star"></i>
-            </div>
-            <div class="card-content">
-                <h3>Training Shoes</h3>
-                <p>This shoes are comfortable and made for sport lovers.</p>
-                <button class="add-to-cart">
-                    Add To Cart
-                </button>
-            </div>
-        </div> 
-        
-        <div class="card">
-            <div class="card-image">
-                <img src="images/02.png" alt="...">
-                <i class="bx bx-star"></i>
-            </div>
-            <div class="card-content">
-                <h3>Football Shoes</h3>
-                <p>This shoes are comfortable and made for sport lovers.</p>
-                <button class="add-to-cart">
-                    Add To Cart
-                </button>
-            </div>
-        </div>
-    
-        <div class="card">
-            <div class="card-image">
-                <img src="images/03.png" alt="...">
-                <i class="bx bx-star"></i>
-            </div>
-            <div class="card-content">
-                <h3>Gym Shoes</h3>
-                <p>This shoes are comfortable and made for sport lovers.</p>
-                <button class="add-to-cart">
-                    Add To Cart
-                </button>
-            </div>
-        </div>
-    
-        <div class="card">
-            <div class="card-image">
-                <img src="images/04.png" alt="...">
-                <i class="bx bx-star"></i>
-            </div>
-            <div class="card-content">
-                <h3>Jogging Shoes</h3>
-                <p>This shoes are comfortable and made for sport lovers.</p>
-                <button class="add-to-cart">
-                    Add To Cart
-                </button>
-            </div>
-        </div>
+  <h1>🎬 Story Image Prompt Generator</h1>
+  <div class="container">
+    <label>Story Idea:</label>
+    <textarea id="story" rows="3" placeholder="e.g., A dog finds a magic bone"></textarea>
 
-        <div class="card">
-            <div class="card-image">
-                <img src="images/05.png" alt="...">
-                <i class="bx bx-star"></i>
-            </div>
-            <div class="card-content">
-                <h3>Beach Shoes</h3>
-                <p>This shoes are comfortable and made for sport lovers.</p>
-                <button class="add-to-cart">
-                    Add To Cart
-                </button>
-            </div>
-        </div>
-        
-    </div>
+    <label>Duration (seconds):</label>
+    <input type="number" id="duration" min="10" max="300" value="60">
 
+    <label>Scenes (# of prompts):</label>
+    <input type="number" id="numPrompts" min="1" max="10" value="4">
+
+    <label>Language:</label>
+    <select id="language">
+      <option value="english">English</option>
+      <option value="hindi">Hindi</option>
+      <option value="urdu">Urdu</option>
+    </select>
+
+    <label>Theme:</label>
+    <select id="theme">
+      <option value="cinematic">Cinematic</option>
+      <option value="realistic">Realistic</option>
+      <option value="anime">Anime</option>
+      <option value="cartoon">Cartoon</option>
+      <option value="sci-fi">Sci-Fi</option>
+      <option value="fantasy">Fantasy</option>
+      <option value="horror">Horror</option>
+      <option value="custom">Custom (type below)</option>
+    </select>
+
+    <input type="text" id="customTheme" placeholder="Enter custom theme (optional)">
+
+    <button onclick="generateStory()">Generate Story & Images</button>
+
+    <div class="output" id="outputBox">⚡ Results will appear here...</div>
+  </div>
+
+  <script>
+    const GEMINI_KEY = "AIzaSyBhwffuawWX01eRJA5X_D9vpE7llZpIsVY";
+    const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent";
+
+    async function generateStory() {
+      const story = document.getElementById("story").value;
+      const duration = parseInt(document.getElementById("duration").value);
+      const numPrompts = parseInt(document.getElementById("numPrompts").value);
+      const language = document.getElementById("language").value;
+      const theme = document.getElementById("theme").value === "custom"
+        ? document.getElementById("customTheme").value
+        : document.getElementById("theme").value;
+
+      const secondsPerScene = Math.floor(duration / numPrompts);
+
+      const userPrompt = `
+      Create a storyboard with ${numPrompts} scenes for the story:
+      "${story}"
+
+      Each scene must:
+      - Be ~${secondsPerScene} seconds
+      - Language: ${language}
+      - Theme: ${theme}
+      - Include consistent characters (same clothing, same style, same skin tone)
+      - Provide only one clean image prompt per scene
+      `;
+
+      document.getElementById("outputBox").innerHTML = "⏳ Generating story with Gemini...";
+
+      try {
+        const response = await fetch(`${GEMINI_URL}?key=${GEMINI_KEY}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: userPrompt }] }] })
+        });
+
+        const data = await response.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "⚠️ No valid response";
+
+        const scenes = text.split("\n").filter(l => l.trim() !== "");
+        let html = "";
+        for (let i = 0; i < scenes.length; i++) {
+          html += `<div><p><b>Scene ${i+1}:</b> ${scenes[i]}</p><div id="img-${i}">⏳ Generating image...</div></div>`;
+          generateImage(scenes[i], i);
+        }
+
+        document.getElementById("outputBox").innerHTML = html;
+
+      } catch (err) {
+        document.getElementById("outputBox").innerText = "❌ Error: " + err.message;
+      }
+    }
+
+    async function generateImage(prompt, index) {
+      try {
+        const response = await fetch("/api/generate-image", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt })
+        });
+
+        const data = await response.json();
+
+        if (data.imageUrl) {
+          document.getElementById(`img-${index}`).innerHTML =
+            `<img src="${data.imageUrl}" alt="Scene Image">`;
+        } else {
+          document.getElementById(`img-${index}`).innerHTML =
+            `<p>❌ Failed to generate image.</p>`;
+        }
+      } catch (err) {
+        document.getElementById(`img-${index}`).innerHTML =
+          `<p>❌ Image error: ${err.message}</p>`;
+      }
+    }
+  </script>
 </body>
-
 </html>
